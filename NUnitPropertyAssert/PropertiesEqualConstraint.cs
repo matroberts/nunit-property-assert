@@ -27,6 +27,14 @@ namespace NUnitPropertyAssert
 
         public override ConstraintResult ApplyTo<TActual>(TActual actual)
         {
+            // null checks mimic how nunit equals work
+            if(expected==null && actual==null)
+                return new ConstraintResult(this, actual, true);
+            if(expected==null)
+                return new MessageConstraintResult(this, actual, "Expected is null");
+            if (actual == null)
+                return new MessageConstraintResult(this, actual, "Actual is null");
+
             // actual should contain all of the properties which expected has
             // though actual may have extra properties which expected does not
             var expectedProperties = new List<PropertyInfo>(expected.GetType().GetProperties().Where(p => propertiesToIgnore.Contains(p.Name) == false));

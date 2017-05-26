@@ -143,12 +143,30 @@ namespace NUnitPropertyAssert
             Assert.That(ex.Message, Contains.Substring("IntProperty"));
         }
 
+        [Test]
+        public void PropertiesEqual_IfExpectedAndActualAreNull_NoErrorReturned()
+        {
+            TestObject1Property expected = null;
+            TestObject1Property actual = null;
+            Assert.That(actual, Properties.Equal(expected));
+        }
 
+        [Test]
+        public void PropertiesEqual_IfExpectedIsNull_ErrorReturned()
+        {
+            TestObject1Property expected = null;
+            TestObject1Property actual = new TestObject1Property();
+            var ex = Assert.Throws<AssertionException>(() => Assert.That(actual, Properties.Equal(expected)));
+            Assert.That(ex.Message, Contains.Substring("Expected is null"));
+        }
 
-        //        [Test]
-        //        public void PropertiesEqual_DealsWithNulls()
-        //        {
-        //            Assert.That(null, Properties.Equal(new TestObject1Property() { StringProperty = "right" }));
-        //        }
+        [Test]
+        public void PropertiesEqual_IfActualIsNull_ErrorReturned()
+        {
+            TestObject1Property expected = new TestObject1Property();
+            TestObject1Property actual = null;
+            var ex = Assert.Throws<AssertionException>(() => Assert.That(actual, Properties.Equal(expected)));
+            Assert.That(ex.Message, Contains.Substring("Actual is null"));
+        }
     }
 }
