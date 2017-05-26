@@ -44,7 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="NUnitPropertyAssert.cs" />
+    <Compile Include="PropertiesEqualConstraintTests.cs" />
+    <Compile Include="PropertiesEqualConstraint.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
