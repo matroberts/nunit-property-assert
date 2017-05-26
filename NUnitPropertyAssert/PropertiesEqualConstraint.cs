@@ -107,7 +107,7 @@ namespace NUnitPropertyAssert
 
         public override void WriteMessageTo(MessageWriter writer)
         {
-            foreach (var result in results)
+            foreach (var result in results.Where(r => r.Value.IsSuccess ==false))
             {
                 writer.WriteMessageLine($"{result.Key} differ:");
                 result.Value.WriteMessageTo(writer);

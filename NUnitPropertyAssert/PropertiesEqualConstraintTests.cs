@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
@@ -127,6 +128,16 @@ namespace NUnitPropertyAssert
         }
 
         [Test]
+        public void PropertiesEqual_WhenAPropertyIsNotEqual_OnlyTheNotEqualPropertyIsReportedInTheErrorMessage()
+        {
+            var ex = Assert.Throws<AssertionException>(() => Assert.That(new TestObject3Property() { StringProperty = "wrong", FloatProperty = 7.0f, IntProperty = 9 },
+                                                        Properties.Equal(new TestObject3Property() { StringProperty = "right", FloatProperty = 7.0f, IntProperty = 9 })));
+            Assert.That(ex.Message, Contains.Substring("StringProperty"));
+            Assert.That(ex.Message, Does.Not.Contain("FloatProperty"));
+            Assert.That(ex.Message, Does.Not.Contain("IntProperty"));
+        }
+
+        [Test]
         public void PropertiesEqual_TheObjectsDoNotHaveToBeTheSameType()
         {
             Assert.That(new TestObject3PropertyDifferentType() { StringProperty = "wrong", FloatProperty = 7.0f, IntProperty = 9 },
@@ -137,10 +148,9 @@ namespace NUnitPropertyAssert
         public void PropertiesEqual_UsesNUnitEqualComparisionOnTheProperties_WhenDeterminingIfPropertyTypesAreCompatible()
         {
             var ex = Assert.Throws<AssertionException>(() => Assert.That(new TestObject3PropertyWrongPropertyTypes() { StringProperty = 2, FloatProperty = "string", IntProperty = 9 },
-                         Properties.Equal(new TestObject3Property() { StringProperty = "wrong", FloatProperty = 7.0f, IntProperty = 9 })));
+                         Properties.Equal(new TestObject3Property() { StringProperty = "2", FloatProperty = 7.0f, IntProperty = 9 })));
             Assert.That(ex.Message, Contains.Substring("StringProperty"));
             Assert.That(ex.Message, Contains.Substring("FloatProperty"));
-            Assert.That(ex.Message, Contains.Substring("IntProperty"));
         }
 
         [Test]
