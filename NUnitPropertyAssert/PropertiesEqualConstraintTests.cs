@@ -74,27 +74,36 @@ namespace NUnitPropertyAssert
         }
 
         [Test]
+        public void PropertiesEqual_IfThePropertyValues_AreEqual_NoErrorReturned()
+        {
+            Assert.That(new TestObject1Property() { StringProperty = "right" }, Properties.Equal(new TestObject1Property() { StringProperty = "right" }));
+        }
+
+        [Test]
         public void PropertiesEqual_IfThePropertyValues_AreNotEqual_ReturnsError()
         {
-            var ex = Assert.Throws<AssertionException>(() => Assert.That(new TestObject1Property() {StringProperty = "wrong"}, Properties.Equal(new TestObject1Property() {StringProperty = "right"})));
+            var ex = Assert.Throws<AssertionException>(() => Assert.That(new TestObject1Property() {StringProperty = "wrong"}, 
+                                                        Properties.Equal(new TestObject1Property() {StringProperty = "right"})));
             Assert.That(ex.Message, Contains.Substring("StringProperty"));
             Assert.That(ex.Message, Contains.Substring("Expected: \"right\""));
             Assert.That(ex.Message, Contains.Substring("But was:  \"wrong\""));
         }
 
         [Test]
-        public void PropertiesEqual_TestsAndReportsOnAllOfTheProperties_EvenWithMultipleFailures()
+        public void PropertiesEqual_IfAnyOfThePropertiesDiffer_AnErrorIsReturned()
         {
-            var ex = Assert.Throws<AssertionException>(() => Assert.That(new TestObject3Property() { StringProperty = "wrong", FloatProperty = 7.0f, IntProperty = 9 }, Properties.Equal(new TestObject3Property() { StringProperty = "right", FloatProperty = 2.0f, IntProperty = 11 })));
-            Assert.That(ex.Message, Contains.Substring("StringProperty"));
-            Assert.That(ex.Message, Contains.Substring("FloatProperty"));
-            Assert.That(ex.Message, Contains.Substring("IntProperty"));
+            Assert.Throws<AssertionException>(() => Assert.That(new TestObject3Property() { StringProperty = "right", FloatProperty = 7.0f, IntProperty = 9 },
+                                               Properties.Equal(new TestObject3Property() { StringProperty = "right", FloatProperty = 2.0f, IntProperty = 9 })));
         }
 
         [Test]
-        public void PropertiesEqual_IfThePropertyValues_AreEqual_NoErrorReturned()
+        public void PropertiesEqual_TestsAndReportsOnAllOfTheProperties_EvenWithMultipleFailures()
         {
-            Assert.That(new TestObject1Property() { StringProperty = "right" }, Properties.Equal(new TestObject1Property() { StringProperty = "right" }));
+            var ex = Assert.Throws<AssertionException>(() => Assert.That(new TestObject3Property() { StringProperty = "wrong", FloatProperty = 7.0f, IntProperty = 9 }, 
+                                                        Properties.Equal(new TestObject3Property() { StringProperty = "right", FloatProperty = 2.0f, IntProperty = 11 })));
+            Assert.That(ex.Message, Contains.Substring("StringProperty"));
+            Assert.That(ex.Message, Contains.Substring("FloatProperty"));
+            Assert.That(ex.Message, Contains.Substring("IntProperty"));
         }
     }
 }
