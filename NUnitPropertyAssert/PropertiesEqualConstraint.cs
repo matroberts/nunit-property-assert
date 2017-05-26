@@ -1,17 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using NUnit.Framework.Constraints;
 
 namespace NUnitPropertyAssert
 {
-    public class PropertiesEqualConstraint : Constraint
+    public class Properties
     {
-        private readonly object expected;
+        public static PropertiesEqualConstraint<TExpected> Equal<TExpected>(TExpected expected)
+        {
+            return new PropertiesEqualConstraint<TExpected>(expected);
+        }
+    }
+
+    public class PropertiesEqualConstraint<TExpected> : Constraint
+    {
+        private readonly TExpected expected;
         private readonly List<string> propertiesToIgnore = new List<string>();
 
-        public PropertiesEqualConstraint(object expected)
+        public PropertiesEqualConstraint(TExpected expected)
         {
             this.expected = expected;
         }
@@ -20,16 +29,16 @@ namespace NUnitPropertyAssert
         {
             // actual should contain all of the properties which expected has
             // though actual may have extra properties which expected does not
-            var expectedProperties = new List<PropertyInfo>(expected.GetType().GetProperties());
+            var expectedProperties = new List<PropertyInfo>(expected.GetType().GetProperties().Where(p => propertiesToIgnore.Contains(p.Name) == false));
             var actualProperties = new List<PropertyInfo>(actual.GetType().GetProperties());
 
-            var missingProperties = expectedProperties.Select(p => p.Name).Except(actualProperties.Select(p => p.Name)).Except(propertiesToIgnore).ToList();
+            var missingProperties = expectedProperties.Select(p => p.Name).Except(actualProperties.Select(p => p.Name)).ToList();
             if(missingProperties.Any())
                 return new MessageConstraintResult(this, actual, $"Expected contains the following properties which actual is missing: {string.Join(", ", missingProperties)}");
 
             // loop though expected objects properties, and use nunit equal constraint to see if properties are equal
             var result = new MultiEqualsConstraintResult(this, actual);
-            foreach (var expectedProperty in expectedProperties.Where(p => propertiesToIgnore.Contains(p.Name)==false))
+            foreach (var expectedProperty in expectedProperties)
             {
                 var expectedPropertyValue = expectedProperty.GetValue(expected, null);
                 var actualPropertyValue = actualProperties.Single(p => p.Name == expectedProperty.Name).GetValue(actual, null);
@@ -41,9 +50,19 @@ namespace NUnitPropertyAssert
             return result;
         }
 
-        public PropertiesEqualConstraint Ignore(string propertyName)
+        public PropertiesEqualConstraint<TExpected> Ignore(string propertyName)
         {
             propertiesToIgnore.Add(propertyName);
+            return this;
+        }
+
+        public PropertiesEqualConstraint<TExpected> Ignore<TProperty>(Expression<Func<TExpected, TProperty>> propertyNameExpression)
+        {
+            var memberExpression = propertyNameExpression.Body as MemberExpression;
+            if (memberExpression != null)
+            {
+                propertiesToIgnore.Add(memberExpression.Member.Name);
+            }
             return this;
         }
     }
@@ -89,11 +108,4 @@ namespace NUnitPropertyAssert
         }
     }
 
-    public class Properties 
-    {
-        public static PropertiesEqualConstraint Equal(object expected)
-        {
-            return new PropertiesEqualConstraint(expected);
-        }
-    }
 }

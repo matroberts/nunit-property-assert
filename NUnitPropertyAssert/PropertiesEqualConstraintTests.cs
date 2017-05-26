@@ -35,6 +35,20 @@ namespace NUnitPropertyAssert
             public float FloatProperty { get; set; }
         }
 
+        public class TestObject3PropertyDifferentType
+        {
+            public string StringProperty { get; set; }
+            public int IntProperty { get; set; }
+            public float FloatProperty { get; set; }
+        }
+
+        public class TestObject3PropertyWrongPropertyTypes
+        {
+            public int StringProperty { get; set; }
+            public float IntProperty { get; set; }
+            public string FloatProperty { get; set; }
+        }
+
         [Test]
         public void PropertiesEqual_IfTheActualObjectHasSamePropertiesAndValues_AsExpectedObject_NoErrorReturned()
         {
@@ -55,9 +69,15 @@ namespace NUnitPropertyAssert
         }
 
         [Test]
-        public void PropertiesEqual_PropertiesCanBeIgnored()
+        public void PropertiesEqual_PropertiesCanBeIgnored_WithStringNamedProperties()
         {
             Assert.That(new TestObject1Property(), Properties.Equal(new TestObject3Property()).Ignore("IntProperty").Ignore("FloatProperty"));
+        }
+
+        [Test]
+        public void PropertiesEqual_PropertiesCanBeIgnored_WithExpressionSyntax()
+        {
+            Assert.That(new TestObject1Property(), Properties.Equal(new TestObject3Property()).Ignore(o => o.IntProperty).Ignore(o => o.FloatProperty));
         }
 
         [Test]
@@ -105,5 +125,30 @@ namespace NUnitPropertyAssert
             Assert.That(ex.Message, Contains.Substring("FloatProperty"));
             Assert.That(ex.Message, Contains.Substring("IntProperty"));
         }
+
+        [Test]
+        public void PropertiesEqual_TheObjectsDoNotHaveToBeTheSameType()
+        {
+            Assert.That(new TestObject3PropertyDifferentType() { StringProperty = "wrong", FloatProperty = 7.0f, IntProperty = 9 },
+                    Properties.Equal(new TestObject3Property() { StringProperty = "wrong", FloatProperty = 7.0f, IntProperty = 9 }));
+        }
+
+        [Test]
+        public void PropertiesEqual_UsesNUnitEqualComparisionOnTheProperties_WhenDeterminingIfPropertyTypesAreCompatible()
+        {
+            var ex = Assert.Throws<AssertionException>(() => Assert.That(new TestObject3PropertyWrongPropertyTypes() { StringProperty = 2, FloatProperty = "string", IntProperty = 9 },
+                         Properties.Equal(new TestObject3Property() { StringProperty = "wrong", FloatProperty = 7.0f, IntProperty = 9 })));
+            Assert.That(ex.Message, Contains.Substring("StringProperty"));
+            Assert.That(ex.Message, Contains.Substring("FloatProperty"));
+            Assert.That(ex.Message, Contains.Substring("IntProperty"));
+        }
+
+
+
+        //        [Test]
+        //        public void PropertiesEqual_DealsWithNulls()
+        //        {
+        //            Assert.That(null, Properties.Equal(new TestObject1Property() { StringProperty = "right" }));
+        //        }
     }
 }
