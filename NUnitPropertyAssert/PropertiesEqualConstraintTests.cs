@@ -72,5 +72,29 @@ namespace NUnitPropertyAssert
         {
             Assert.That(new TestObject0Property(), Properties.Equal(new TestObject1PrivateProperty()));
         }
+
+        [Test]
+        public void PropertiesEqual_IfThePropertyValues_AreNotEqual_ReturnsError()
+        {
+            var ex = Assert.Throws<AssertionException>(() => Assert.That(new TestObject1Property() {StringProperty = "wrong"}, Properties.Equal(new TestObject1Property() {StringProperty = "right"})));
+            Assert.That(ex.Message, Contains.Substring("StringProperty"));
+            Assert.That(ex.Message, Contains.Substring("Expected: \"right\""));
+            Assert.That(ex.Message, Contains.Substring("But was:  \"wrong\""));
+        }
+
+        [Test]
+        public void PropertiesEqual_TestsAndReportsOnAllOfTheProperties_EvenWithMultipleFailures()
+        {
+            var ex = Assert.Throws<AssertionException>(() => Assert.That(new TestObject3Property() { StringProperty = "wrong", FloatProperty = 7.0f, IntProperty = 9 }, Properties.Equal(new TestObject3Property() { StringProperty = "right", FloatProperty = 2.0f, IntProperty = 11 })));
+            Assert.That(ex.Message, Contains.Substring("StringProperty"));
+            Assert.That(ex.Message, Contains.Substring("FloatProperty"));
+            Assert.That(ex.Message, Contains.Substring("IntProperty"));
+        }
+
+        [Test]
+        public void PropertiesEqual_IfThePropertyValues_AreEqual_NoErrorReturned()
+        {
+            Assert.That(new TestObject1Property() { StringProperty = "right" }, Properties.Equal(new TestObject1Property() { StringProperty = "right" }));
+        }
     }
 }

@@ -9,7 +9,7 @@ namespace NUnitPropertyAssert
     public class PropertiesEqualConstraint : Constraint
     {
         private readonly object expected;
-        private List<string> propertiesToIgnore = new List<string>();
+        private readonly List<string> propertiesToIgnore = new List<string>();
 
         public PropertiesEqualConstraint(object expected)
         {
@@ -25,14 +25,20 @@ namespace NUnitPropertyAssert
 
             var missingProperties = expectedProperties.Select(p => p.Name).Except(actualProperties.Select(p => p.Name)).Except(propertiesToIgnore).ToList();
             if(missingProperties.Any())
-                return new PropertiesEqualConstraintResult(this, actual, false, $"Expected contains the following properties which actual is missing: {string.Join(", ", missingProperties)}");
+                return new MessageConstraintResult(this, actual, $"Expected contains the following properties which actual is missing: {string.Join(", ", missingProperties)}");
 
+            // loop though expected objects properties, and use nunit equal constraint to see if properties are equal
+            var result = new MultiEqualsConstraintResult(this, actual);
+            foreach (var expectedProperty in expectedProperties.Where(p => propertiesToIgnore.Contains(p.Name)==false))
+            {
+                var expectedPropertyValue = expectedProperty.GetValue(expected, null);
+                var actualPropertyValue = actualProperties.Single(p => p.Name == expectedProperty.Name).GetValue(actual, null);
 
-            // loop though expected objects properties
-            // and do an nunit areequal on each property
-            // 
+                var equalConstraint = new EqualConstraint(expectedPropertyValue);
+                result.AddResult(expectedProperty.Name, equalConstraint.ApplyTo(actualPropertyValue));
+            }
 
-            return new PropertiesEqualConstraintResult(this, actual, true, $"Expected and Actual are have equal properties.");
+            return result;
         }
 
         public PropertiesEqualConstraint Ignore(string propertyName)
@@ -42,11 +48,11 @@ namespace NUnitPropertyAssert
         }
     }
 
-    public class PropertiesEqualConstraintResult : ConstraintResult
+    public class MessageConstraintResult : ConstraintResult
     {
         private readonly string message;
 
-        public PropertiesEqualConstraintResult(IConstraint constraint, object actualValue, bool isSuccess, string message) : base(constraint, actualValue, isSuccess)
+        public MessageConstraintResult(IConstraint constraint, object actualValue, string message) : base(constraint, actualValue, false)
         {
             this.message = message;
         }
@@ -54,6 +60,32 @@ namespace NUnitPropertyAssert
         public override void WriteMessageTo(MessageWriter writer)
         {
             writer.WriteMessageLine(message);
+        }
+    }
+
+    public class MultiEqualsConstraintResult : ConstraintResult
+    {
+        private readonly List<KeyValuePair<string, ConstraintResult>> results = new List<KeyValuePair<string, ConstraintResult>>();
+
+        public MultiEqualsConstraintResult(IConstraint constraint, object actualValue) : base(constraint, actualValue)
+        {
+        }
+
+        public void AddResult(string propertyName, ConstraintResult result)
+        {
+            results.Add(new KeyValuePair<string, ConstraintResult>(propertyName, result));
+        }
+
+        public override bool IsSuccess => results.All(r => r.Value.IsSuccess);
+
+        public override void WriteMessageTo(MessageWriter writer)
+        {
+            foreach (var result in results)
+            {
+                writer.WriteMessageLine($"{result.Key} differ:");
+                result.Value.WriteMessageTo(writer);
+                writer.WriteLine();
+            }
         }
     }
 
